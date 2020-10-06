@@ -1,5 +1,5 @@
 
-const tabs = (tabsButtonsWrapperSelector,tabsButtonSelector, tabContentSelector, activeClass) => {
+const tabs = (tabsButtonsWrapperSelector,tabsButtonSelector, tabContentSelector, activeClass, display = 'block') => {
 
     const tabButtonsWrapper = document.querySelector(tabsButtonsWrapperSelector),
           tabButtons = document.querySelectorAll(tabsButtonSelector),
@@ -17,8 +17,9 @@ const tabs = (tabsButtonsWrapperSelector,tabsButtonSelector, tabContentSelector,
     }
 
     function showTab(i = 0){
-        tabContent[i].style.display = 'block';
+        tabContent[i].style.display = display;
 
+        tabButtons[i].classList.add(activeClass);
         tabButtons[i].lastElementChild.classList.add(activeClass);
     }
 

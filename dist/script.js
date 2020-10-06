@@ -296,6 +296,36 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/internals/array-method-has-species-support.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/core-js/internals/array-method-has-species-support.js ***!
+  \****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+var wellKnownSymbol = __webpack_require__(/*! ../internals/well-known-symbol */ "./node_modules/core-js/internals/well-known-symbol.js");
+var V8_VERSION = __webpack_require__(/*! ../internals/v8-version */ "./node_modules/core-js/internals/v8-version.js");
+
+var SPECIES = wellKnownSymbol('species');
+
+module.exports = function (METHOD_NAME) {
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/677
+  return V8_VERSION >= 51 || !fails(function () {
+    var array = [];
+    var constructor = array.constructor = {};
+    constructor[SPECIES] = function () {
+      return { foo: 1 };
+    };
+    return array[METHOD_NAME](Boolean).foo !== 1;
+  });
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/internals/array-species-create.js":
 /*!****************************************************************!*\
   !*** ./node_modules/core-js/internals/array-species-create.js ***!
@@ -2488,6 +2518,31 @@ module.exports = function (name) {
     else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
   } return WellKnownSymbolsStore[name];
 };
+
+
+/***/ }),
+
+/***/ "./node_modules/core-js/modules/es.array.map.js":
+/*!******************************************************!*\
+  !*** ./node_modules/core-js/modules/es.array.map.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(/*! ../internals/export */ "./node_modules/core-js/internals/export.js");
+var $map = __webpack_require__(/*! ../internals/array-iteration */ "./node_modules/core-js/internals/array-iteration.js").map;
+var arrayMethodHasSpeciesSupport = __webpack_require__(/*! ../internals/array-method-has-species-support */ "./node_modules/core-js/internals/array-method-has-species-support.js");
+
+// `Array.prototype.map` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.map
+// with adding support of @@species
+$({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('map') }, {
+  map: function map(callbackfn /* , thisArg */) {
+    return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
 
 
 /***/ }),
@@ -17742,6 +17797,75 @@ module.exports = g;
 
 /***/ }),
 
+/***/ "./src/js/components/changeModalState.js":
+/*!***********************************************!*\
+  !*** ./src/js/components/changeModalState.js ***!
+  \***********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _inputNumValid__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./inputNumValid */ "./src/js/components/inputNumValid.js");
+
+
+
+var changeModalState = function changeModalState(state) {
+  var typeButtons = document.querySelectorAll('[data-type]'),
+      width = document.querySelectorAll('#width'),
+      height = document.querySelectorAll('#height'),
+      viewType = document.querySelectorAll('#view_type'),
+      tempCheckboxes = document.querySelectorAll('[name="checkbox-test"]');
+  Object(_inputNumValid__WEBPACK_IMPORTED_MODULE_1__["default"])(width);
+  Object(_inputNumValid__WEBPACK_IMPORTED_MODULE_1__["default"])(height);
+
+  var bindActionToState = function bindActionToState(elems, action, prop) {
+    elems.forEach(function (item, i) {
+      item.addEventListener(action, function () {
+        switch (item.nodeName) {
+          case 'IMG':
+            state[prop] = "\u0424\u043E\u0440\u043C\u0430 \u0431\u0430\u043B\u043A\u043E\u043D\u0430: ".concat(++i);
+            break;
+
+          case 'INPUT':
+            if (item.getAttribute('id') === 'width') {
+              state[prop] = item.value;
+            } else if (item.getAttribute('id') === 'height') {
+              state[prop] = item.value;
+            } else if (item.getAttribute('type') === 'checkbox') {
+              i === 0 ? state[prop] = 'Холодное' : state[prop] = 'Теплое';
+              elems.forEach(function (box, j) {
+                box.checked = false;
+
+                if (j === i) {
+                  box.checked = true;
+                }
+              });
+            }
+
+            break;
+
+          case 'SELECT':
+            state[prop] = item.value;
+            break;
+        }
+      });
+    });
+  };
+
+  bindActionToState(typeButtons, 'click', 'form');
+  bindActionToState(width, 'input', 'width');
+  bindActionToState(height, 'input', 'height');
+  bindActionToState(viewType, 'change', 'type');
+  bindActionToState(tempCheckboxes, 'click', 'cold/warm');
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (changeModalState);
+
+/***/ }),
+
 /***/ "./src/js/components/forms.js":
 /*!************************************!*\
   !*** ./src/js/components/forms.js ***!
@@ -17755,32 +17879,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var core_js_modules_es_object_to_string__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_object_to_string__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/es.promise */ "./node_modules/core-js/modules/es.promise.js");
 /* harmony import */ var core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var core_js_modules_es_string_replace__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! core-js/modules/es.string.replace */ "./node_modules/core-js/modules/es.string.replace.js");
-/* harmony import */ var core_js_modules_es_string_replace__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_string_replace__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
-/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! regenerator-runtime/runtime */ "./node_modules/regenerator-runtime/runtime.js");
-/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! regenerator-runtime/runtime */ "./node_modules/regenerator-runtime/runtime.js");
+/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _inputNumValid__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./inputNumValid */ "./src/js/components/inputNumValid.js");
 
 
 
 
 
 
-// собрать вес формы и инпуты
-// навесить обработчик событий сабмит на формы
-// при срабатывании запускать отправку на сервер форм датф через фетч (асинхронность- осторожно!) и подстановку сообщени о загрузке и отчищеть все инпуты
-// сделать объект сообщений с разными текстами
-// при кетче - выводит сообщение о ошибке
-var forms = function forms() {
+var forms = function forms(state) {
   var allForms = document.querySelectorAll('form'),
       allInputs = document.querySelectorAll('input'),
       allPhoneInputs = document.querySelectorAll('input[name="user_phone"]');
-  allPhoneInputs.forEach(function (item) {
-    item.addEventListener('input', function () {
-      item.value = item.value.replace(/[^1-9\+\-]/g, '');
-    });
-  });
+  Object(_inputNumValid__WEBPACK_IMPORTED_MODULE_4__["default"])(allPhoneInputs);
 
   var sendFormData = function sendFormData(url, formData) {
     var res;
@@ -17832,6 +17946,13 @@ var forms = function forms() {
       item.appendChild(messageDiv);
       messageDiv.textContent = message.loading;
       var formData = new FormData(item);
+
+      if (item.getAttribute('data-calc') === 'end') {
+        for (var key in state) {
+          formData.append(key, state[key]);
+        }
+      }
+
       sendFormData('assets/server.php', formData).then(function (res) {
         console.log(res);
         messageDiv.textContent = message.succes;
@@ -17854,6 +17975,77 @@ var forms = function forms() {
 
 /***/ }),
 
+/***/ "./src/js/components/imageViewer.js":
+/*!******************************************!*\
+  !*** ./src/js/components/imageViewer.js ***!
+  \******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+var imagesViewer = function imagesViewer() {
+  var parentDiv = document.querySelector('.works');
+  var popup = document.createElement('div');
+  popup.classList.add('popup');
+  popup.style.justifyContent = 'center';
+  popup.style.alignItems = 'center';
+  document.body.appendChild(popup);
+  popup.addEventListener('click', function (e) {
+    if (e.target.classList.contains('popup')) {
+      popup.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  });
+  var img = document.createElement('img');
+  img.style.maxHeight = '80%';
+  img.style.maxWidth = '80%';
+  popup.appendChild(img);
+  parentDiv.addEventListener('click', function (e) {
+    console.log('click');
+
+    if (e.target && e.target.classList.contains('preview')) {
+      e.preventDefault();
+      var path = e.target.parentNode.getAttribute('href');
+      img.setAttribute('src', path);
+      popup.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  });
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (imagesViewer);
+
+/***/ }),
+
+/***/ "./src/js/components/inputNumValid.js":
+/*!********************************************!*\
+  !*** ./src/js/components/inputNumValid.js ***!
+  \********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_es_string_replace__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.string.replace */ "./node_modules/core-js/modules/es.string.replace.js");
+/* harmony import */ var core_js_modules_es_string_replace__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_string_replace__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1__);
+
+
+
+var inputNumValid = function inputNumValid(inputs) {
+  inputs.forEach(function (item) {
+    item.addEventListener('input', function () {
+      item.value = item.value.replace(/[^1-9\+\-]/g, '');
+    });
+  });
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (inputNumValid);
+
+/***/ }),
+
 /***/ "./src/js/components/modals.js":
 /*!*************************************!*\
   !*** ./src/js/components/modals.js ***!
@@ -17873,7 +18065,16 @@ var modals = function modals() {
     document.body.style.overflow = '';
   };
 
+  var closeAllModal = function closeAllModal() {
+    var modals = document.querySelectorAll('[data-modal]');
+    modals.forEach(function (item) {
+      item.style.display = 'none';
+    });
+    document.body.style.overflow = '';
+  };
+
   function bindModal(triggerSelector, modalSelector, closeSelector) {
+    var closeOverflow = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
     var triggers = document.querySelectorAll(triggerSelector),
         modal = document.querySelector(modalSelector),
         close = document.querySelector(closeSelector);
@@ -17883,24 +18084,29 @@ var modals = function modals() {
           e.preventDefault();
         }
 
+        closeAllModal();
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
       });
     });
     close.addEventListener('click', function () {
-      closeModal(modal);
+      closeAllModal();
     });
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal) {
-        closeModal(modal);
-      }
-    });
+
+    if (closeOverflow) {
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+          closeModal(modal);
+        }
+      });
+    }
   }
 
   var modalTimer = function modalTimer(modalSelector, closeSelector) {
     setTimeout(function () {
       var modal = document.querySelector(modalSelector);
       modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
       var close = document.querySelector(closeSelector);
       modal.addEventListener('click', function (e) {
         if (e.target === modal) {
@@ -17915,8 +18121,10 @@ var modals = function modals() {
 
   bindModal('.popup_engineer_btn', '.popup_engineer', '.popup_engineer .popup_close');
   bindModal('.phone_link', '.popup', '.popup .popup_close');
-  bindModal('.popup_calc_btn', '.popup_calc_profile', '.popup_calc_profile_close');
-  modalTimer('.popup', '.popup .popup_close'); //popup_calc_btn
+  bindModal('.popup_calc_btn', '.popup_calc', '.popup_calc_close', false);
+  bindModal('.popup_calc_button', '.popup_calc_profile', '.popup_calc_profile_close', false);
+  bindModal('.popup_calc_profile_button', '.popup_calc_end', '.popup_calc_end_close', false);
+  modalTimer('.popup', '.popup .popup_close');
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (modals);
@@ -17940,6 +18148,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 var tabs = function tabs(tabsButtonsWrapperSelector, tabsButtonSelector, tabContentSelector, activeClass) {
+  var display = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'block';
   var tabButtonsWrapper = document.querySelector(tabsButtonsWrapperSelector),
       tabButtons = document.querySelectorAll(tabsButtonSelector),
       tabContent = document.querySelectorAll(tabContentSelector);
@@ -17956,7 +18165,8 @@ var tabs = function tabs(tabsButtonsWrapperSelector, tabsButtonSelector, tabCont
 
   function showTab() {
     var i = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-    tabContent[i].style.display = 'block';
+    tabContent[i].style.display = display;
+    tabButtons[i].classList.add(activeClass);
     tabButtons[i].lastElementChild.classList.add(activeClass);
   }
 
@@ -17980,6 +18190,70 @@ var tabs = function tabs(tabsButtonsWrapperSelector, tabsButtonSelector, tabCont
 
 /***/ }),
 
+/***/ "./src/js/components/timer.js":
+/*!************************************!*\
+  !*** ./src/js/components/timer.js ***!
+  \************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_es_array_map__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.array.map */ "./node_modules/core-js/modules/es.array.map.js");
+/* harmony import */ var core_js_modules_es_array_map__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_array_map__WEBPACK_IMPORTED_MODULE_0__);
+
+
+var timer = function timer(date) {
+  var daysDiv = document.querySelector('#days'),
+      hoursDiv = document.querySelector('#hours'),
+      minutesDiv = document.querySelector('#minutes'),
+      secondsDiv = document.querySelector('#seconds');
+
+  function setValueToDiv(div, value) {
+    if (value < 10) {
+      div.textContent = "0".concat(value);
+    } else {
+      div.textContent = value;
+    }
+  }
+
+  var setTimer = function setTimer() {
+    var now = new Date().getTime();
+    var promoDate = Date.parse("".concat(date, "T00:00:00.000+03:00"));
+    var delta = promoDate - now;
+    var allSeconds = Math.floor(delta / 1000);
+    var seconds = allSeconds % 60;
+    var days = Math.floor(allSeconds / 60 / 60 / 24);
+    var hours = Math.floor(allSeconds / 60 / 60 - days * 24);
+    var minutes = Math.floor(allSeconds / 60 - hours * 60 - days * 60 * 24);
+
+    if (delta < 0) {
+      [daysDiv, hoursDiv, minutesDiv, secondsDiv].map(function (item) {
+        item.textContent = '00';
+      });
+      clearInterval(timerID);
+      return;
+    }
+
+    setValueToDiv(daysDiv, days);
+    setValueToDiv(hoursDiv, hours);
+    setValueToDiv(minutesDiv, minutes);
+    setValueToDiv(secondsDiv, seconds);
+  };
+
+  setTimer();
+
+  var timerID = function timerID() {
+    return setInterval(setTimer, 1000);
+  };
+
+  timerID();
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (timer);
+
+/***/ }),
+
 /***/ "./src/js/main.js":
 /*!************************!*\
   !*** ./src/js/main.js ***!
@@ -17993,15 +18267,28 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_modals__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/modals */ "./src/js/components/modals.js");
 /* harmony import */ var _components_tabs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/tabs */ "./src/js/components/tabs.js");
 /* harmony import */ var _components_forms__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/forms */ "./src/js/components/forms.js");
+/* harmony import */ var _components_changeModalState__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./components/changeModalState */ "./src/js/components/changeModalState.js");
+/* harmony import */ var _components_timer__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./components/timer */ "./src/js/components/timer.js");
+/* harmony import */ var _components_imageViewer__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./components/imageViewer */ "./src/js/components/imageViewer.js");
+
+
+
 
 
 
 
 document.addEventListener('DOMContentLoaded', function () {
+  var modalState = {
+    form: 'Форма балкона: 1'
+  };
   Object(_components_modals__WEBPACK_IMPORTED_MODULE_1__["default"])();
   Object(_components_tabs__WEBPACK_IMPORTED_MODULE_2__["default"])('.glazing_slider', '.glazing_block', '.glazing_content', 'active');
   Object(_components_tabs__WEBPACK_IMPORTED_MODULE_2__["default"])('.decoration_slider', '.no_click', '.decoration_content > div > div', 'after_click');
-  Object(_components_forms__WEBPACK_IMPORTED_MODULE_3__["default"])();
+  Object(_components_tabs__WEBPACK_IMPORTED_MODULE_2__["default"])('.balcon_icons', '.balcon_icons_img', '.big_img > img', 'do_image_more', 'inline-block');
+  Object(_components_forms__WEBPACK_IMPORTED_MODULE_3__["default"])(modalState);
+  Object(_components_changeModalState__WEBPACK_IMPORTED_MODULE_4__["default"])(modalState);
+  Object(_components_timer__WEBPACK_IMPORTED_MODULE_5__["default"])('2020-11-04');
+  Object(_components_imageViewer__WEBPACK_IMPORTED_MODULE_6__["default"])();
 });
 
 /***/ }),

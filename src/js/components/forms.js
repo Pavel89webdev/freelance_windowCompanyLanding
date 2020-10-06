@@ -1,21 +1,11 @@
-// собрать вес формы и инпуты
-// навесить обработчик событий сабмит на формы
-// при срабатывании запускать отправку на сервер форм датф через фетч (асинхронность- осторожно!) и подстановку сообщени о загрузке и отчищеть все инпуты
-// сделать объект сообщений с разными текстами
-// при кетче - выводит сообщение о ошибке
+import inputNumValid from './inputNumValid';
 
-const forms = () => {
+const forms = (state) => {
     const allForms = document.querySelectorAll('form'),
           allInputs = document.querySelectorAll('input'),
           allPhoneInputs = document.querySelectorAll('input[name="user_phone"]');
-
-    allPhoneInputs.forEach( item => {
-        item.addEventListener('input', () => {
-            
-            item.value = item.value.replace(/[^1-9\+\-]/g, '');
-            
-        });
-    });
+         
+    inputNumValid(allPhoneInputs);          
 
     const sendFormData = async (url, formData) => {
         const res = await fetch(url, {
@@ -54,6 +44,13 @@ const forms = () => {
             messageDiv.textContent = message.loading;
 
             const formData = new FormData(item);
+
+            if( item.getAttribute('data-calc') === 'end'){
+                for(let key in state){
+                    formData.append(key, state[key]);
+                }
+            }
+
             sendFormData('assets/server.php', formData)
                 .then( res => {
                     console.log(res);
